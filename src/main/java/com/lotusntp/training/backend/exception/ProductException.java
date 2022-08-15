@@ -6,6 +6,6 @@ public class ProductException extends BaseException{
     }
 
     public static ProductException notFound(){
-        return  new ProductException("not.Found");
+        return  new ProductException("not.Found.45");
     }
 }
