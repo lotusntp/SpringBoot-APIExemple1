@@ -8,7 +8,12 @@ import com.lotusntp.training.backend.mapper.UserMapper;
 import com.lotusntp.training.backend.model.MLoginRequest;
 import com.lotusntp.training.backend.model.MRegisterRequest;
 import com.lotusntp.training.backend.model.MRegisterResponse;
+import com.lotusntp.training.backend.service.TokenService;
 import com.lotusntp.training.backend.service.UserService;
+import com.lotusntp.training.backend.util.SecurityUtil;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,9 +30,30 @@ public class UserBusiness {
 
     private final UserMapper userMapper;
 
-    public UserBusiness(UserService userService, UserMapper userMapper) {
+    private final TokenService tokenService;
+
+    public UserBusiness(UserService userService, UserMapper userMapper, TokenService tokenService) {
         this.userService = userService;
         this.userMapper = userMapper;
+        this.tokenService = tokenService;
+    }
+
+    public String refreshToken() throws BaseException {
+
+        Optional<String> opt = SecurityUtil.getCurrentUserId();
+        if(opt.isEmpty()){
+            throw UserException.unAuthorized();
+        }
+
+        String userId = opt.get();
+        Optional<User> optUser = userService.findById(userId);
+        if(optUser.isEmpty()){
+            throw UserException.notFound();
+        }
+
+        User user = optUser.get();
+        return tokenService.tokenize(user);
+
     }
 
     public MRegisterResponse register(MRegisterRequest request) throws BaseException {
@@ -54,8 +80,8 @@ public class UserBusiness {
 
         // TODO: generate JWT
 
-        String token = "JWT TO DO";
-        return token;
+        return tokenService.tokenize(user);
+
 
     }
 
